@@ -27,7 +27,7 @@ const CreateNotes = () => {
       return;
     }
     axios
-      .post("/api/notes", data)
+      .post("/api/notes", data, { timeout: 1000 * 60 * 60 })
       .then((res) => {
         if (res.status === 200) {
           setLoading(false);
