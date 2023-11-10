@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "mysql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+  relationMode      = "prisma"
+}
+
+model unitData {
+  Id            Int             @id @unique @default(autoincrement())
+  unitName      String
+  chapterNumber Int
+  topics        String          @db.VarChar(1000)
+  response      responseModel[]
+}
+
+model responseModel {
+  Id                   Int                @id @unique @default(autoincrement())
+  explanation          String             @db.VarChar(1000)
+  topic                String             @db.VarChar(1000)
+  youtube_search_query String             @db.VarChar(1000)
+  youtubeIds           String
+  extraPoints          extraPointsModel[]
+  unitData             unitData?          @relation(fields: [unitDataId], references: [Id])
+  unitDataId           Int?
+
+  @@index([unitDataId])
+}
+
+model extraPointsModel {
+  Id               Int                     @id @unique @default(autoincrement())
+  name             String                  @db.LongText
+  explanationExtra explanationExtraModel[]
+  responseModel    responseModel?          @relation(fields: [responseModelId], references: [Id])
+  responseModelId  Int?
+
+  @@index([responseModelId])
+}
+
+model explanationExtraModel {
+  Id            Int               @id @unique @default(autoincrement())
+  topic         String            @db.LongText
+  description   String            @db.VarChar(10000)
+  extraPoints   extraPointsModel? @relation(fields: [extraPointsId], references: [Id])
+  extraPointsId Int?
+
+  @@index([extraPointsId])
+}
