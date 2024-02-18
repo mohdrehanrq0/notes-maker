@@ -19,7 +19,7 @@ model unitData {
 
 model responseModel {
   Id                   Int                @id @unique @default(autoincrement())
-  explanation          String             @db.VarChar(1000)
+  explanation          String             @db.VarChar(10000)
   topic                String             @db.VarChar(1000)
   youtube_search_query String             @db.VarChar(1000)
   youtubeIds           String

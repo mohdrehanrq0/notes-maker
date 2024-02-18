@@ -17,84 +17,103 @@ const zodParser = z.object({
   unitName: z.string(),
   chapterNumber: z.number(),
 });
-const notes_parser_openai = z.object({
-  topic: z.string().describe("topic name that you have explain"),
-  explanation: z.string().describe("it is the explanation of the given topic"),
+const notes_parser_openai = {
+  topic: z.string().describe(`topic name that you are explaining`),
+  explanation: z
+    .string()
+    .describe(
+      `explanation of the given topic in proper string format in 150 words and don't use double quote and new line character`
+    ),
   extraPoints: z
     .array(
       z.object({
         name: z
           .string()
-          .describe(
-            "it is the name of the thing that is explain that means its a description, feature,examples, characteristics, advantages, disadvantages or types"
-          ),
+          .describe(`it is the name of the thing that is explaining `),
         explanationExtra: z.array(
           z.object({
             topic: z
               .string()
-              .describe("name of the topic that you are explaining"),
+              .describe(`name of the topic that you are explaining `),
             description: z
               .string()
-              .describe("explanation of the topic in 250 words"),
+              .describe(`explanation of the topic in 250 words`),
           })
         ),
       })
     )
+    .optional()
     .describe(
-      "it is the extra feature,examples, characteristics, advantages, disadvantages or types of the given subtopic"
+      `if topic has some process steps, terms, noteworthy features, applications, characteristics, examples, advantages, disadvantages, or types please outline them. Additionally, mention any notable advantages and disadvantages associated with {topic} in the section if any. Include relevant examples if possible and it not mandatory that you have mention all in this section if its important then only explain otherwise you can skip it and consider the diverse learning styles of the audience`
     ),
-  // youtube_search_query: z
-  //   .string()
-  //   .describe("search query for the youtube api"),
-  // image_search_query: z
-  //   .string()
-  //   .describe("search query for the unsplash api"),
-});
-const systemPrompt = `I have given you the {topic} in context of {unit}. You have to explain that {topic} it in such a way that you are talking it to an 10 year old student. Use simple language, provide a overview of what {topic} and why it's important or interesting in 250 words. If there's a notable feature, characteristics,example, advantage, disadvantage and types associated with {topic} than explain that also in brief generate the content as faster as you can`;
+};
+// const systemPrompt = `I have given you the {topic} in context of {unit}. You have to explain that {topic} in 200 words to a 10 year old student. Use simple language, provide a overview of what {topic} and why it's important and interesting and remember you have to give the response explanation in single paragraph, do not use new line character and double quote. If there's a notable feature ,application, characteristics,example, advantage, disadvantage and types associated with {topic} than explain that also in brief in "extraPoints". Ensure there are no newline characters in the explanation.`;
+
+// const systemPrompt = `Describe {topic} in context of {unit} (around 180 words )  in a way that a  Indian college students understand who may have a limited understanding of English,  can grasp easily. Use simple language and relate {topic} to everyday life experiences. Provide a short overview (around 180 words) on what {topic} is, its importance, why it's interesting and organize the information logically.If {topic} involves any specific process steps, terms, noteworthy features, applications, characteristics, examples, advantages, disadvantages, or types, please outline them. Additionally, mention any notable advantages and disadvantages associated with {topic} in the "extraPoints" section if any. Include relevant examples if possible and it not mandatory that you have mention all in "extraPoints" if its important then only explain otherwise you can skip it and consider the diverse learning styles of the audience.Ensure the explanation is concise, don't use double quote and free of newline characters.`;
+
+// const systemPrompt = `Describe the {topic} in the context of {unit} in around 150 words, ensuring clarity for Indian college students with limited English proficiency and can grasp easily. Use simple language and real-world examples to explain what {topic} is, its importance, and why it's interesting. and organize the information logically.If {topic} involves specific process steps, terms, noteworthy features, applications, characteristics, examples, advantages, disadvantages, or types, briefly outline them. However, keep the main explanation focused and concise. In the "extraPoints" section, provide additional details as needed, but prioritize brevity. Consider the diverse learning styles of the audience.Ensure the explanation is concise,in proper string format without using double quotes in explanation use only single quote, and free of newline characters.`;
+
+const systemPrompt = `Describe the {topic} in the context of {unit} in short around 50-80 words, ensuring clarity for Indian college students with limited English proficiency. Use simple language and real-world examples to explain what {topic} is, its importance, and why it's interesting. Organize the information logically in a single paragraph. If {topic} involves specific process steps, terms, noteworthy features, applications, characteristics, examples, advantages, disadvantages, or types, briefly outline them without using newlines. However, keep the main explanation focused and concise. In the "extraPoints" section, provide additional details as needed, but prioritize brevity. Consider the diverse learning styles of the audience. Ensure the explanation is concise, in proper string format without using double quotes in the explanation (use only single quotes), and free of newline characters.While explaining {topic} don't go more than 50-80 words.`;
 
 export const createNotesOpenAI = async (topics: string[], unitName: string) => {
-  const openAiParser =
-    StructuredOutputParser.fromZodSchema(notes_parser_openai);
-  const output_format = openAiParser.getFormatInstructions();
-  let updatedResponse: any = [];
-  const promptTemplate = new PromptTemplate({
-    template: systemPrompt + "\n {output_format}",
-    inputVariables: ["topic", "unit"],
-    partialVariables: { output_format: output_format },
-  });
-  const humanMessage = new HumanMessagePromptTemplate({
-    prompt: promptTemplate,
-  });
-  const chatPromptTemplate = ChatPromptTemplate.fromMessages([humanMessage]);
-
-  const model = new ChatOpenAI({
-    modelName: "gpt-3.5-turbo",
-    openAIApiKey: process.env.OPENAI_API_KEY,
-    temperature: 0.7,
-  });
-  const chain = new LLMChain({
-    prompt: chatPromptTemplate,
-    llm: model,
-  });
-  for (var j = 0; j < topics.length; j++) {
-    const response = await chain.call({
-      topic: topics[j],
-      unit: unitName,
-      formatInstructions: output_format,
+  try {
+    const openAiParser = StructuredOutputParser.fromZodSchema(
+      z.object(notes_parser_openai)
+    );
+    const output_format = openAiParser.getFormatInstructions();
+    let updatedResponse: any = [];
+    const promptTemplate = new PromptTemplate({
+      template: systemPrompt + "\n {output_format}",
+      inputVariables: ["topic", "unit"],
+      partialVariables: { output_format: output_format },
     });
-    const Response = response.text;
-    const Json = await openAiParser.parse(Response);
-    // updatedResponse.push(Json[0]);
-    if (Json) {
-      let ytVideosArr = await searchYoutube(Json.topic + "in hindi");
-      ytVideosArr = ytVideosArr.map((e: any) => e.id.videoId);
-      updatedResponse.push({ ...Json, youtubeIds: ytVideosArr });
+    const humanMessage = new HumanMessagePromptTemplate({
+      prompt: promptTemplate,
+    });
+    const chatPromptTemplate = ChatPromptTemplate.fromMessages([humanMessage]);
 
-      console.log(updatedResponse, j);
+    const model = new ChatOpenAI({
+      modelName: "gpt-3.5-turbo",
+      openAIApiKey: process.env.OPENAI_API_KEY,
+      temperature: 0.4,
+    });
+    const chain = new LLMChain({
+      prompt: chatPromptTemplate,
+      llm: model,
+    });
+    for (var j = 0; j < topics.length; j++) {
+      const response = await chain.call({
+        topic: topics[j],
+        unit: unitName,
+        formatInstructions: output_format,
+      });
+
+      // let Response = response.text.replace(/\n/g, " ");
+      // let Response = response.text.trimEnd().replace(/\n/g, " ");
+      let Response = response.text;
+
+      const Json = await openAiParser.parse(Response);
+
+      // updatedResponse.push(Json[0]);
+      if (Json) {
+        let ytVideosArr = await searchYoutube(Json.topic + "in hindi");
+        ytVideosArr = ytVideosArr?.map((e: any) => e.id.videoId);
+        updatedResponse.push({ ...Json, youtubeIds: ytVideosArr });
+
+        console.log(updatedResponse, j);
+      }
+    }
+
+    return { updatedResponse };
+  } catch (error) {
+    if (error instanceof ZodError) {
+      // Handle validation errors
+      console.error("Validation Error:", error.errors);
+    } else {
+      // Handle other errors
+      console.error("Error:", error);
     }
   }
-
-  return { updatedResponse };
 };
 
 export const POST = async (req: Request, res: Response) => {
@@ -108,10 +127,10 @@ export const POST = async (req: Request, res: Response) => {
       });
     }
 
-    const { updatedResponse } = await createNotesOpenAI(
+    const { updatedResponse } = (await createNotesOpenAI(
       data.data.topics,
       data.data.unitName
-    );
+    )) as any;
 
     const dataForChatDatabase = {
       unitName: data.data.unitName,
@@ -129,27 +148,29 @@ export const POST = async (req: Request, res: Response) => {
           explanation: data.explanation,
           topic: data.topic,
           youtube_search_query: data.topic + "in hindi",
-          youtubeIds: JSON.stringify(data.youtubeIds),
+          youtubeIds: JSON.stringify(data.youtubeIds ? data.youtubeIds : []),
           unitDataId: createChat.Id,
         },
       });
 
-      for (const pointsData of data.extraPoints) {
-        const extraPointData = await prisma.extraPointsModel.create({
-          data: {
-            name: pointsData.name,
-            responseModelId: responseData.Id,
-          },
-        });
-        await prisma.explanationExtraModel.createMany({
-          data: pointsData.explanationExtra.map((data: any) => {
-            return {
-              topic: data.topic,
-              description: data.description,
-              extraPointsId: extraPointData.Id,
-            };
-          }),
-        });
+      if (data?.extraPoints) {
+        for (const pointsData of data.extraPoints) {
+          const extraPointData = await prisma.extraPointsModel.create({
+            data: {
+              name: pointsData.name,
+              responseModelId: responseData.Id,
+            },
+          });
+          await prisma.explanationExtraModel.createMany({
+            data: pointsData.explanationExtra.map((data: any) => {
+              return {
+                topic: data.topic,
+                description: data.description,
+                extraPointsId: extraPointData.Id,
+              };
+            }),
+          });
+        }
       }
     }
 

@@ -53,7 +53,7 @@ const Pdf = ({
             <div className="text-black text-xl font-bold tracking-wide mb-2 font-nunito">
               {e.topic}
             </div>
-            <div className="text-black tracking-wide font-nunito">
+            <div className="text-black tracking-wide font-nunito whitespace-pre-line">
               {e.explanation}
             </div>
             <div className="flex text-black mb-5">
