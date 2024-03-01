@@ -122,8 +122,9 @@ const Pdf = ({
                 {JSON.parse(e.youtubeIds)?.map((e: string, i: number) => (
                   <a
                     href={`https://www.youtube.com/watch?v=${e}`}
-                    className="flex gap-2 items-center font-nunito"
+                    className="flex gap-2 items-center font-nunito underline"
                     key={i}
+                    style={{ color: "#0000EE" }}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
