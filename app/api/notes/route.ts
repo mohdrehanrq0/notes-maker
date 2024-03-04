@@ -44,7 +44,7 @@ const notes_parser_openai = {
     )
     .optional()
     .describe(
-      `if topic has some process steps, terms, noteworthy features, applications, characteristics, examples, advantages, disadvantages, or types please outline them. Additionally, mention any notable advantages and disadvantages associated with {topic} in the section if any. Include relevant examples if possible and it not mandatory that you have mention all in this section if its important then only explain otherwise you can skip it and consider the diverse learning styles of the audience`
+      `if topic has some process steps, terms, noteworthy features, applications, characteristics, examples, advantages, disadvantages, or types please outline them. Additionally, mention any notable advantages and disadvantages associated with {topic} in the section if any. Include relevant examples if possible and it not mandatory that you have mention all in this section if its important then only explain otherwise you can skip it and consider the diverse learning styles of the audience and also give the response in proper json format and according to schema`
     ),
 };
 // const systemPrompt = `I have given you the {topic} in context of {unit}. You have to explain that {topic} in 200 words to a 10 year old student. Use simple language, provide a overview of what {topic} and why it's important and interesting and remember you have to give the response explanation in single paragraph, do not use new line character and double quote. If there's a notable feature ,application, characteristics,example, advantage, disadvantage and types associated with {topic} than explain that also in brief in "extraPoints". Ensure there are no newline characters in the explanation.`;
@@ -73,7 +73,7 @@ export const createNotesOpenAI = async (topics: string[], unitName: string) => {
     const chatPromptTemplate = ChatPromptTemplate.fromMessages([humanMessage]);
 
     const model = new ChatOpenAI({
-      modelName: "gpt-3.5-turbo",
+      modelName: "gpt-4",
       openAIApiKey: process.env.OPENAI_API_KEY,
       temperature: 0.4,
     });
@@ -88,20 +88,32 @@ export const createNotesOpenAI = async (topics: string[], unitName: string) => {
         formatInstructions: output_format,
       });
 
-      // let Response = response.text.replace(/\n/g, " ");
-      // let Response = response.text.trimEnd().replace(/\n/g, " ");
       let Response = response.text;
+      try {
+        const Json = await openAiParser.parse(Response);
 
-      const Json = await openAiParser.parse(Response);
+        if (Json && Json.topic && Json.explanation) {
+          let ytVideosArr = await searchYoutube(Json.topic + "in hindi");
+          ytVideosArr = ytVideosArr?.map((e: any) => e.id.videoId);
+          updatedResponse.push({ ...Json, youtubeIds: ytVideosArr });
 
-      // updatedResponse.push(Json[0]);
-      if (Json) {
-        let ytVideosArr = await searchYoutube(Json.topic + "in hindi");
-        ytVideosArr = ytVideosArr?.map((e: any) => e.id.videoId);
-        updatedResponse.push({ ...Json, youtubeIds: ytVideosArr });
-
-        console.log(updatedResponse, j);
+          console.log(updatedResponse, j);
+        } else {
+          console.error("Invalid OpenAI response:", Json);
+        }
+      } catch (error) {
+        console.error("Error parsing OpenAI response:", error);
       }
+      // const Json = await openAiParser.parse(Response);
+
+      // // updatedResponse.push(Json[0]);
+      // if (Json) {
+      //   let ytVideosArr = await searchYoutube(Json.topic + "in hindi");
+      //   ytVideosArr = ytVideosArr?.map((e: any) => e.id.videoId);
+      //   updatedResponse.push({ ...Json, youtubeIds: ytVideosArr });
+
+      //   console.log(updatedResponse, j);
+      // }
     }
 
     return { updatedResponse };
