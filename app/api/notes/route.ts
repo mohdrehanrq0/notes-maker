@@ -16,20 +16,29 @@ const zodParser = z.object({
   topics: z.array(z.string()),
   unitName: z.string(),
   chapterNumber: z.number(),
+  course: z.string(),
+  semester: z.string(),
+  year: z.string(),
+  branch: z.string(),
 });
 const notes_parser_openai = {
-  topic: z.string().describe(`topic name that you are explaining`),
+  topic: z.string().describe(`topic name that you are explaining `),
   explanation: z
     .string()
     .describe(
-      `explanation of the given topic in proper string format in 150 words and don't use double quote and new line character`
+      `explanation of the given topic in proper string format in 100 words and don't use double quote and new line character `
+    ),
+  example: z
+    .string()
+    .describe(
+      `example of the given topic in proper string format in 150 words and don't use double quote and new line character `
     ),
   extraPoints: z
     .array(
       z.object({
         name: z
           .string()
-          .describe(`it is the name of the thing that is explaining `),
+          .describe(`it is the name of the thing that is explaining`),
         explanationExtra: z.array(
           z.object({
             topic: z
@@ -37,7 +46,7 @@ const notes_parser_openai = {
               .describe(`name of the topic that you are explaining `),
             description: z
               .string()
-              .describe(`explanation of the topic in 250 words`),
+              .describe(`explanation of the topic in 250 words `),
           })
         ),
       })
@@ -53,7 +62,9 @@ const notes_parser_openai = {
 
 // const systemPrompt = `Describe the {topic} in the context of {unit} in around 150 words, ensuring clarity for Indian college students with limited English proficiency and can grasp easily. Use simple language and real-world examples to explain what {topic} is, its importance, and why it's interesting. and organize the information logically.If {topic} involves specific process steps, terms, noteworthy features, applications, characteristics, examples, advantages, disadvantages, or types, briefly outline them. However, keep the main explanation focused and concise. In the "extraPoints" section, provide additional details as needed, but prioritize brevity. Consider the diverse learning styles of the audience.Ensure the explanation is concise,in proper string format without using double quotes in explanation use only single quote, and free of newline characters.`;
 
-const systemPrompt = `Describe the {topic} in the context of {unit} in short around 50-80 words, ensuring clarity for Indian college students with limited English proficiency. Use simple language and real-world examples to explain what {topic} is, its importance, and why it's interesting. Organize the information logically in a single paragraph. If {topic} involves specific process steps, terms, noteworthy features, applications, characteristics, examples, advantages, disadvantages, or types, briefly outline them without using newlines. However, keep the main explanation focused and concise. In the "extraPoints" section, provide additional details as needed, but prioritize brevity. Consider the diverse learning styles of the audience. Ensure the explanation is concise, in proper string format without using double quotes in the explanation (use only single quotes), and free of newline characters.While explaining {topic} don't go more than 50-80 words.`;
+const systemPrompt = `Describe the {topic} in the context of {unit} in short around 70-80 words, ensuring clarity for Indian college students with limited English proficiency.Define the {topic} in "explanation" and if the {topic} can be explain with example then explain that in "example". Don't add example in "explanation".Use simple language and real-world examples to explain what {topic} is, its importance, and why it's interesting. Organize the information logically in a single paragraph. If {topic} involves specific process steps, terms, noteworthy features, applications, characteristics, examples, advantages, disadvantages, or types, briefly outline them without using newlines. In the "extraPoints" section, provide additional details as needed. Consider the diverse learning styles of the audience. Ensure the explanation is concise, in proper string format without using double quotes in the explanation (use only single quotes), and free of newline characters.While explaining {topic} don't go more than 70-80 words.`;
+
+// const systemPrompt = `Explain {topic} in {unit} concisely (100-120 words). Use simple language and real-world examples in the 'explanation'. If applicable, provide an 'example'. Focus on clarity and logic. Briefly touch on any process steps, terms, features, applications, etc., without newlines. Prioritize brevity. Consider diverse learning styles. Ensure the explanation is in proper string format (single quotes only) and without newlines. Limit the explanation to 50-80 words`;
 
 export const createNotesOpenAI = async (topics: string[], unitName: string) => {
   try {
@@ -73,7 +84,7 @@ export const createNotesOpenAI = async (topics: string[], unitName: string) => {
     const chatPromptTemplate = ChatPromptTemplate.fromMessages([humanMessage]);
 
     const model = new ChatOpenAI({
-      modelName: "gpt-4",
+      modelName: "gpt-3.5-turbo",
       openAIApiKey: process.env.OPENAI_API_KEY,
       temperature: 0.4,
     });
@@ -133,10 +144,13 @@ export const POST = async (req: Request, res: Response) => {
     const body = await req.json();
     const data = zodParser.safeParse(body);
     if (!data.success) {
-      return NextResponse.json({
-        success: false,
-        message: "payload is incorrect",
-      });
+      return NextResponse.json(
+        {
+          success: false,
+          message: "payload is incorrect",
+        },
+        { status: 400 }
+      );
     }
 
     const { updatedResponse } = (await createNotesOpenAI(
@@ -148,6 +162,10 @@ export const POST = async (req: Request, res: Response) => {
       unitName: data.data.unitName,
       topics: JSON.stringify(data.data.topics),
       chapterNumber: data.data.chapterNumber,
+      course: data.data.course,
+      semester: data.data.semester,
+      year: data.data.year,
+      branch: data.data.branch,
     };
 
     const createChat = await prisma.unitData.create({
@@ -159,6 +177,7 @@ export const POST = async (req: Request, res: Response) => {
         data: {
           explanation: data.explanation,
           topic: data.topic,
+          example: data.example,
           youtube_search_query: data.topic + "in hindi",
           youtubeIds: JSON.stringify(data.youtubeIds ? data.youtubeIds : []),
           unitDataId: createChat.Id,

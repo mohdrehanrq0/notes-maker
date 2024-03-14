@@ -12,6 +12,10 @@ datasource db {
 model unitData {
   Id            Int             @id @unique @default(autoincrement())
   unitName      String
+  course        String
+  semester      String
+  year          String
+  branch        String
   chapterNumber Int
   topics        String          @db.VarChar(1000)
   response      responseModel[]
@@ -20,12 +24,13 @@ model unitData {
 model responseModel {
   Id                   Int                @id @unique @default(autoincrement())
   explanation          String             @db.VarChar(10000)
+  example              String             @db.VarChar(1000)
   topic                String             @db.VarChar(1000)
   youtube_search_query String             @db.VarChar(1000)
   youtubeIds           String
+  unitDataId           Int?
   extraPoints          extraPointsModel[]
   unitData             unitData?          @relation(fields: [unitDataId], references: [Id])
-  unitDataId           Int?
 
   @@index([unitDataId])
 }
@@ -33,9 +38,9 @@ model responseModel {
 model extraPointsModel {
   Id               Int                     @id @unique @default(autoincrement())
   name             String                  @db.LongText
+  responseModelId  Int?
   explanationExtra explanationExtraModel[]
   responseModel    responseModel?          @relation(fields: [responseModelId], references: [Id])
-  responseModelId  Int?
 
   @@index([responseModelId])
 }
@@ -44,8 +49,8 @@ model explanationExtraModel {
   Id            Int               @id @unique @default(autoincrement())
   topic         String            @db.LongText
   description   String            @db.VarChar(10000)
-  extraPoints   extraPointsModel? @relation(fields: [extraPointsId], references: [Id])
   extraPointsId Int?
+  extraPoints   extraPointsModel? @relation(fields: [extraPointsId], references: [Id])
 
   @@index([extraPointsId])
 }

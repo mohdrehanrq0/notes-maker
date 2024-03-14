@@ -8,10 +8,18 @@ const CreateNotes = () => {
     chapterNumber: number | null;
     unitName: string | null;
     topics: string[] | null;
+    course: string | null;
+    branch: string | null;
+    year: string | null;
+    semester: string | null;
   }>({
     chapterNumber: null,
     unitName: null,
     topics: null,
+    course: null,
+    branch: null,
+    year: null,
+    semester: null,
   });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -40,9 +48,11 @@ const CreateNotes = () => {
         setLoading(false);
       });
   };
+
+  console.log(data);
   return (
     <div className="h-[100vh] w-[100vw] flex justify-center items-center ">
-      <div className="w-[50vw] h-[65vh]  bg-gray-400 rounded-md bg-clip-padding backdrop-filter backdrop-blur-sm bg-opacity-20 border border-gray-100 flex flex-col justify-center items-center">
+      <div className="w-[50vw] py-5  bg-gray-400 rounded-md bg-clip-padding backdrop-filter backdrop-blur-sm bg-opacity-20 border border-gray-100 flex flex-col justify-center items-center">
         <div className="font-medium text-center text-3xl text-white font-nunito mb-5">
           Create a Notes
         </div>
@@ -81,6 +91,78 @@ const CreateNotes = () => {
               }))
             }
           />
+
+          <select
+            id="countries"
+            className="w-3/5 rounded-md  border border-gray-300 text-gray-900 text-sm focus:ring-blue-500 focus:border-blue-500 block p-2.5 focus:outline-none "
+            value={data?.course as string}
+            onChange={(e) =>
+              setData((pre) => ({
+                ...pre,
+                course: e.target.value,
+              }))
+            }
+          >
+            <option selected>Choose a course</option>
+            <option value="btech">B Tech</option>
+          </select>
+          <select
+            id="countries"
+            className="w-3/5 rounded-md  border border-gray-300 text-gray-900 text-sm focus:ring-blue-500 focus:border-blue-500 block p-2.5 focus:outline-none "
+            value={data?.branch as string}
+            onChange={(e) =>
+              setData((pre) => ({
+                ...pre,
+                branch: e.target.value,
+              }))
+            }
+          >
+            <option selected>Choose a branch</option>
+            <option value="cse">Computer Science Engg.</option>
+            <option value="it">Information Technology Engg.</option>
+            <option value="exe">Electrical & Electronics Engg.</option>
+            <option value="ece">Electronics and Communication Engg. </option>
+            <option value="civil">Civil Engg.</option>
+            <option value="mechanical">Mechanical Engg.</option>
+          </select>
+          <select
+            id="countries"
+            className="w-3/5 rounded-md  border border-gray-300 text-gray-900 text-sm focus:ring-blue-500 focus:border-blue-500 block p-2.5 focus:outline-none "
+            value={data?.year as string}
+            onChange={(e) =>
+              setData((pre) => ({
+                ...pre,
+                year: e.target.value,
+              }))
+            }
+          >
+            <option selected>Choose a year</option>
+            <option value="1">1 Year</option>
+            <option value="2">2 Year</option>
+            <option value="3">3 Year</option>
+            <option value="4">4 Year</option>
+          </select>
+          <select
+            id="countries"
+            className="w-3/5 rounded-md  border border-gray-300 text-gray-900 text-sm focus:ring-blue-500 focus:border-blue-500 block p-2.5 focus:outline-none "
+            value={data?.semester as string}
+            onChange={(e) =>
+              setData((pre) => ({
+                ...pre,
+                semester: e.target.value,
+              }))
+            }
+          >
+            <option selected>Choose a semester</option>
+            <option value="1">1 Semester</option>
+            <option value="2">2 Semester</option>
+            <option value="3">3 Semester</option>
+            <option value="4">4 Semester</option>
+            <option value="5">5 Semester</option>
+            <option value="6">6 Semester</option>
+            <option value="7">7 Semester</option>
+            <option value="8">8 Semester</option>
+          </select>
         </div>
         <div className="w-full ">
           <button
