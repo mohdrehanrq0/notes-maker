@@ -6,7 +6,7 @@ import {
   HumanMessagePromptTemplate,
   PromptTemplate,
 } from "langchain/prompts";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z, ZodError } from "zod";
 
 import { prisma } from "@/lib/db";
@@ -20,6 +20,13 @@ const zodParser = z.object({
   semester: z.string(),
   year: z.string(),
   branch: z.string(),
+});
+
+const getRequest = z.object({
+  course: z.string().optional(),
+  semester: z.string().optional(),
+  year: z.string().optional(),
+  branch: z.string().optional(),
 });
 const notes_parser_openai = {
   topic: z.string().describe(`topic name that you are explaining `),
@@ -139,7 +146,7 @@ export const createNotesOpenAI = async (topics: string[], unitName: string) => {
   }
 };
 
-export const POST = async (req: Request, res: Response) => {
+export const POST = async (req: NextRequest, res: NextResponse) => {
   try {
     const body = await req.json();
     const data = zodParser.safeParse(body);
@@ -218,8 +225,64 @@ export const POST = async (req: Request, res: Response) => {
   }
 };
 
-export const GET = async (req: Request, res: Response) => {
+export const GET = async (req: NextRequest, res: NextResponse) => {
+  const course = req.nextUrl.searchParams.get("course");
+  const semester = req.nextUrl.searchParams.get("semester");
+  const year = req.nextUrl.searchParams.get("year");
+  const branch = req.nextUrl.searchParams.get("branch");
+
+  if (!(course && semester && year && branch)) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "please add query param",
+      },
+      { status: 400 }
+    );
+  }
+
   const data = await prisma.unitData.findMany({
+    where: {
+      course,
+      semester,
+      year,
+      branch,
+    },
+    include: {
+      response: {
+        include: {
+          extraPoints: {
+            include: {
+              explanationExtra: true,
+            },
+          },
+        },
+      },
+    },
+  });
+  return NextResponse.json({
+    success: true,
+    data,
+  });
+};
+
+export const DELETE = async (req: NextRequest, res: NextResponse) => {
+  const id = req.nextUrl.searchParams.get("Id");
+
+  if (!id) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "please add query param",
+      },
+      { status: 400 }
+    );
+  }
+
+  const data = await prisma.unitData.delete({
+    where: {
+      Id: Number(id),
+    },
     include: {
       response: {
         include: {

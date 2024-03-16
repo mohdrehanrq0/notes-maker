@@ -3,6 +3,13 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
+import {
+  branch,
+  course,
+  graduationSemester,
+  graduationYear,
+} from "@/utils/data";
+
 const CreateNotes = () => {
   const [data, setData] = useState<{
     chapterNumber: number | null;
@@ -49,7 +56,6 @@ const CreateNotes = () => {
       });
   };
 
-  console.log(data);
   return (
     <div className="h-[100vh] w-[100vw] flex justify-center items-center ">
       <div className="w-[50vw] py-5  bg-gray-400 rounded-md bg-clip-padding backdrop-filter backdrop-blur-sm bg-opacity-20 border border-gray-100 flex flex-col justify-center items-center">
@@ -104,7 +110,11 @@ const CreateNotes = () => {
             }
           >
             <option selected>Choose a course</option>
-            <option value="btech">B Tech</option>
+            {course.map((e, i) => (
+              <option value={e.value} key={i}>
+                {e.name}
+              </option>
+            ))}
           </select>
           <select
             id="countries"
@@ -118,12 +128,17 @@ const CreateNotes = () => {
             }
           >
             <option selected>Choose a branch</option>
-            <option value="cse">Computer Science Engg.</option>
+            {branch.map((e, i) => (
+              <option value={e.value} key={i}>
+                {e.name}
+              </option>
+            ))}
+            {/* <option value="cse">Computer Science Engg.</option>
             <option value="it">Information Technology Engg.</option>
             <option value="exe">Electrical & Electronics Engg.</option>
             <option value="ece">Electronics and Communication Engg. </option>
             <option value="civil">Civil Engg.</option>
-            <option value="mechanical">Mechanical Engg.</option>
+            <option value="mechanical">Mechanical Engg.</option> */}
           </select>
           <select
             id="countries"
@@ -137,10 +152,15 @@ const CreateNotes = () => {
             }
           >
             <option selected>Choose a year</option>
-            <option value="1">1 Year</option>
+            {graduationYear.map((e, i) => (
+              <option value={e.value} key={i}>
+                {e.name}
+              </option>
+            ))}
+            {/* <option value="1">1 Year</option>
             <option value="2">2 Year</option>
             <option value="3">3 Year</option>
-            <option value="4">4 Year</option>
+            <option value="4">4 Year</option> */}
           </select>
           <select
             id="countries"
@@ -154,14 +174,19 @@ const CreateNotes = () => {
             }
           >
             <option selected>Choose a semester</option>
-            <option value="1">1 Semester</option>
+            {graduationSemester.map((e, i) => (
+              <option value={e.value} key={i}>
+                {e.name}
+              </option>
+            ))}
+            {/* <option value="1">1 Semester</option>
             <option value="2">2 Semester</option>
             <option value="3">3 Semester</option>
             <option value="4">4 Semester</option>
             <option value="5">5 Semester</option>
             <option value="6">6 Semester</option>
             <option value="7">7 Semester</option>
-            <option value="8">8 Semester</option>
+            <option value="8">8 Semester</option> */}
           </select>
         </div>
         <div className="w-full ">

@@ -2,7 +2,7 @@ import Link from "next/link";
 import React from "react";
 
 export interface IChatData {
-  id: number;
+  Id: number;
   unitName: string;
   chapterNumber: number;
   topics: string;

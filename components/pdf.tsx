@@ -1,3 +1,4 @@
+import axios from "axios";
 import JsPDF from "jspdf";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -20,7 +21,6 @@ const Pdf = ({
 }) => {
   const router = useRouter();
   const componentRef = useRef<any>();
-  console.log(selectedData.response);
 
   const getPageMargins = () => {
     return `@page { 
@@ -45,6 +45,29 @@ const Pdf = ({
           onClick={() => setSelectedData(undefined)}
         >
           Back
+        </button>
+        <button
+          className="py-2 w-40 bg-red-500 text-white font-bold font-nunito rounded ml-12 "
+          onClick={async () => {
+            const con = confirm("Are you confirm for deletion.");
+            if (con) {
+              await axios
+                .delete(`/api/notes?Id=${selectedData.Id}`, {
+                  timeout: 1000 * 60 * 60,
+                })
+                .then((res) => {
+                  if (res.status === 200) {
+                    alert("Whoa! Notes deleted successfully.");
+                    setSelectedData(undefined);
+                  }
+                })
+                .catch((err) => {
+                  console.log(err);
+                });
+            }
+          }}
+        >
+          Delete
         </button>
         <ReactToPrint
           content={() => componentRef.current}

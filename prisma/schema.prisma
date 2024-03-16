@@ -30,7 +30,7 @@ model responseModel {
   youtubeIds           String
   unitDataId           Int?
   extraPoints          extraPointsModel[]
-  unitData             unitData?          @relation(fields: [unitDataId], references: [Id])
+  unitData             unitData?          @relation(fields: [unitDataId], references: [Id], onDelete: Cascade)
 
   @@index([unitDataId])
 }
@@ -40,7 +40,7 @@ model extraPointsModel {
   name             String                  @db.LongText
   responseModelId  Int?
   explanationExtra explanationExtraModel[]
-  responseModel    responseModel?          @relation(fields: [responseModelId], references: [Id])
+  responseModel    responseModel?          @relation(fields: [responseModelId], references: [Id], onDelete: Cascade)
 
   @@index([responseModelId])
 }
@@ -50,7 +50,7 @@ model explanationExtraModel {
   topic         String            @db.LongText
   description   String            @db.VarChar(10000)
   extraPointsId Int?
-  extraPoints   extraPointsModel? @relation(fields: [extraPointsId], references: [Id])
+  extraPoints   extraPointsModel? @relation(fields: [extraPointsId], references: [Id], onDelete: Cascade)
 
   @@index([extraPointsId])
 }
