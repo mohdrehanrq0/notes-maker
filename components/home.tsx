@@ -46,7 +46,7 @@ const Home = () => {
       fetchData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, selectedData]);
+  }, [selectedData]);
 
   const handleConfirm = () => {
     fetchData();

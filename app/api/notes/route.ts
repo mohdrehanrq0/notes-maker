@@ -112,10 +112,11 @@ export const createNotesOpenAI = async (topics: string[], unitName: string) => {
 
         if (Json && Json.topic && Json.explanation) {
           let ytVideosArr = await searchYoutube(Json.topic + "in hindi");
+
           ytVideosArr = ytVideosArr?.map((e: any) => e.id.videoId);
           updatedResponse.push({ ...Json, youtubeIds: ytVideosArr });
 
-          console.log(updatedResponse, j);
+          console.log(updatedResponse, j, ytVideosArr);
         } else {
           console.error("Invalid OpenAI response:", Json);
         }
@@ -133,7 +134,7 @@ export const createNotesOpenAI = async (topics: string[], unitName: string) => {
       //   console.log(updatedResponse, j);
       // }
     }
-
+    console.log("testing--->", updatedResponse);
     return { updatedResponse };
   } catch (error) {
     if (error instanceof ZodError) {
@@ -174,42 +175,46 @@ export const POST = async (req: NextRequest, res: NextResponse) => {
       year: data.data.year,
       branch: data.data.branch,
     };
-
-    const createChat = await prisma.unitData.create({
-      data: dataForChatDatabase,
-    });
-
-    for (const data of updatedResponse) {
-      const responseData = await prisma.responseModel.create({
-        data: {
-          explanation: data.explanation,
-          topic: data.topic,
-          example: data.example,
-          youtube_search_query: data.topic + "in hindi",
-          youtubeIds: JSON.stringify(data.youtubeIds ? data.youtubeIds : []),
-          unitDataId: createChat.Id,
-        },
+    if (updatedResponse?.length > 0) {
+      const createChat = await prisma.unitData.create({
+        data: dataForChatDatabase,
       });
+      for (const data of updatedResponse) {
+        const responseData = await prisma.responseModel.create({
+          data: {
+            explanation: data.explanation,
+            topic: data.topic,
+            example: data.example,
+            youtube_search_query: data.topic + "in hindi",
+            youtubeIds: JSON.stringify(data.youtubeIds ? data.youtubeIds : []),
+            unitDataId: createChat.Id,
+          },
+        });
 
-      if (data?.extraPoints) {
-        for (const pointsData of data.extraPoints) {
-          const extraPointData = await prisma.extraPointsModel.create({
-            data: {
-              name: pointsData.name,
-              responseModelId: responseData.Id,
-            },
-          });
-          await prisma.explanationExtraModel.createMany({
-            data: pointsData.explanationExtra.map((data: any) => {
-              return {
-                topic: data.topic,
-                description: data.description,
-                extraPointsId: extraPointData.Id,
-              };
-            }),
-          });
+        if (data?.extraPoints) {
+          for (const pointsData of data.extraPoints) {
+            const extraPointData = await prisma.extraPointsModel.create({
+              data: {
+                name: pointsData.name,
+                responseModelId: responseData.Id,
+              },
+            });
+            await prisma.explanationExtraModel.createMany({
+              data: pointsData.explanationExtra.map((data: any) => {
+                return {
+                  topic: data.topic,
+                  description: data.description,
+                  extraPointsId: extraPointData.Id,
+                };
+              }),
+            });
+          }
         }
       }
+    } else {
+      return new NextResponse("Problem occur while generating content.", {
+        status: 400,
+      });
     }
 
     return NextResponse.json({
