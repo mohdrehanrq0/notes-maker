@@ -116,12 +116,20 @@ export const createNotesOpenAI = async (topics: string[], unitName: string) => {
           ytVideosArr = ytVideosArr?.map((e: any) => e.id.videoId);
           updatedResponse.push({ ...Json, youtubeIds: ytVideosArr });
 
-          console.log(updatedResponse, j, ytVideosArr);
+          console.log(updatedResponse, j);
         } else {
           console.error("Invalid OpenAI response:", Json);
+          return {
+            success: false,
+            message: "Invalid OpenAI response .",
+          };
         }
       } catch (error) {
         console.error("Error parsing OpenAI response:", error);
+        return {
+          success: false,
+          message: "Error parsing OpenAI response or youtube api error occur.",
+        };
       }
       // const Json = await openAiParser.parse(Response);
 
@@ -134,8 +142,7 @@ export const createNotesOpenAI = async (topics: string[], unitName: string) => {
       //   console.log(updatedResponse, j);
       // }
     }
-    console.log("testing--->", updatedResponse);
-    return { updatedResponse };
+    return { success: true, updatedResponse };
   } catch (error) {
     if (error instanceof ZodError) {
       // Handle validation errors
@@ -161,7 +168,7 @@ export const POST = async (req: NextRequest, res: NextResponse) => {
       );
     }
 
-    const { updatedResponse } = (await createNotesOpenAI(
+    const { updatedResponse, success, message } = (await createNotesOpenAI(
       data.data.topics,
       data.data.unitName
     )) as any;
@@ -175,7 +182,7 @@ export const POST = async (req: NextRequest, res: NextResponse) => {
       year: data.data.year,
       branch: data.data.branch,
     };
-    if (updatedResponse?.length > 0) {
+    if (success && updatedResponse?.length > 0) {
       const createChat = await prisma.unitData.create({
         data: dataForChatDatabase,
       });
@@ -212,7 +219,7 @@ export const POST = async (req: NextRequest, res: NextResponse) => {
         }
       }
     } else {
-      return new NextResponse("Problem occur while generating content.", {
+      return new NextResponse(message, {
         status: 400,
       });
     }
@@ -223,10 +230,10 @@ export const POST = async (req: NextRequest, res: NextResponse) => {
     });
   } catch (error) {
     if (error instanceof ZodError) {
-      return new NextResponse("invalid body", { status: 400 });
+      return new NextResponse("Invalid body", { status: 400 });
     }
     console.error("error", error);
-    return new NextResponse("internal error: " + error, { status: 500 });
+    return new NextResponse("Internal error: " + error, { status: 500 });
   }
 };
 

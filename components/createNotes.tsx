@@ -52,6 +52,7 @@ const CreateNotes = () => {
       })
       .catch((err) => {
         console.log(err);
+        alert(err.response.data);
         setLoading(false);
       });
   };
