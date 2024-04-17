@@ -1,20 +1,62 @@
 import axios from "axios";
 
-export const searchYoutube = async (searchString: string) => {
-  const searchQuery = encodeURIComponent(searchString);
-  const { data } = await axios.get(
-    `https://www.googleapis.com/youtube/v3/search?key=${process.env.YOUTUBE_API_KEY}&q=${searchQuery}&videoDuration=medium&videoEmbeddable=true&type=video&maxResults=2`
-  );
-  if (!data) {
-    console.log("youtube fail");
-    return null;
+export const searchYoutube = async (
+  searchString: string
+  // youtubeAPIKeys: string[]
+) => {
+  // const searchQuery = encodeURIComponent(searchString);
+  // const { data } = await axios.get(
+  //   `https://www.googleapis.com/youtube/v3/search?key=${process.env.YOUTUBE_API_KEY}&q=${searchQuery}&videoDuration=medium&videoEmbeddable=true&type=video&maxResults=2`
+  // );
+  // if (!data) {
+  //   console.log("youtube fail");
+  //   return null;
+  // }
+  // if (data.items[0] == undefined) {
+  //   console.log("youtube fail");
+  //   return null;
+  // }
+  // // console.log("yt data ====================", data.items);
+  // return data.items;
+  const youtubeAPIKeys = [
+    process.env.YOUTUBE_API_KEY1,
+    process.env.YOUTUBE_API_KEY2,
+    process.env.YOUTUBE_API_KEY3,
+    process.env.YOUTUBE_API_KEY4,
+    process.env.YOUTUBE_API_KEY5,
+    process.env.YOUTUBE_API_KEY6,
+    process.env.YOUTUBE_API_KEY7,
+    process.env.YOUTUBE_API_KEY8,
+    process.env.YOUTUBE_API_KEY9,
+    process.env.YOUTUBE_API_KEY10,
+    process.env.YOUTUBE_API_KEY11,
+    process.env.YOUTUBE_API_KEY12,
+    process.env.YOUTUBE_API_KEY13,
+    process.env.YOUTUBE_API_KEY14,
+    process.env.YOUTUBE_API_KEY15,
+    process.env.YOUTUBE_API_KEY16,
+    process.env.YOUTUBE_API_KEY17,
+    process.env.YOUTUBE_API_KEY18,
+    process.env.YOUTUBE_API_KEY19,
+    process.env.YOUTUBE_API_KEY20,
+    process.env.YOUTUBE_API_KEY21,
+    process.env.YOUTUBE_API_KEY22,
+  ];
+  for (const apiKey of youtubeAPIKeys) {
+    try {
+      const searchQuery = encodeURIComponent(searchString);
+      const { data } = await axios.get(
+        `https://www.googleapis.com/youtube/v3/search?key=${apiKey}&q=${searchQuery}&videoDuration=medium&videoEmbeddable=true&type=video&maxResults=2`
+      );
+      if (data && data.items && data.items.length > 0) {
+        return data.items;
+      }
+    } catch (error) {
+      console.error("YouTube API request failed with API key:", apiKey);
+    }
   }
-  if (data.items[0] == undefined) {
-    console.log("youtube fail");
-    return null;
-  }
-  console.log("yt data ====================", data.items);
-  return data.items;
+  console.log("All YouTube API requests failed");
+  return null;
 };
 
 // const systemPrompt = `I have given you the {topic} in context of {unit}. You have to explain that {topic} in 200 words to a 10 year old student. Use simple language, provide a overview of what {topic} and why it's important and interesting and remember you have to give the response explanation in single paragraph, do not use new line character and double quote. If there's a notable feature ,application, characteristics,example, advantage, disadvantage and types associated with {topic} than explain that also in brief in "extraPoints". Ensure there are no newline characters in the explanation.`;

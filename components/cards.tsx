@@ -24,7 +24,7 @@ const Cards = ({
         </h5>
       </a>
       <p className="mb-3 font-normal text-gray-700 dark:text-gray-400">
-        {JSON.parse(data.topics).toString().slice(0, 100)}
+        {JSON.parse(JSON.stringify(data?.topics)).toString().slice(0, 100)}
       </p>
       <Link
         href={{

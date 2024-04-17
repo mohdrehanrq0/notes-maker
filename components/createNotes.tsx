@@ -58,8 +58,8 @@ const CreateNotes = () => {
   };
 
   return (
-    <div className="h-[100vh] w-[100vw] flex justify-center items-center ">
-      <div className="w-[50vw] py-5  bg-gray-400 rounded-md bg-clip-padding backdrop-filter backdrop-blur-sm bg-opacity-20 border border-gray-100 flex flex-col justify-center items-center">
+    <div className="h-[100vh] w-[100vw] flex justify-center items-center  overflow-x-auto">
+      <div className="w-[50vw] py-5  bg-gray-400 rounded-md bg-clip-padding overflow-hidden backdrop-filter backdrop-blur-sm bg-opacity-20 border border-gray-100 flex flex-col justify-center items-center">
         <div className="font-medium text-center text-3xl text-white font-nunito mb-5">
           Create a Notes
         </div>
