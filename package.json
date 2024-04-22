@@ -16,6 +16,7 @@
     "html2canvas": "^1.4.1",
     "jspdf": "^2.5.1",
     "langchain": "^0.0.155",
+    "lottie-react": "^2.4.0",
     "next": "latest",
     "react": "latest",
     "react-dom": "latest",

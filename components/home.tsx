@@ -92,10 +92,16 @@ const Home = () => {
             Change filter
           </button>
           <button
-            className="py-2 w-60 bg-white text-black font-bold font-nunito rounded mr-20"
+            className="py-2 w-[160px] bg-white text-black font-bold font-nunito rounded mr-4"
             onClick={() => router.push("/createNotes")}
           >
-            Create a notes
+            Subject notes
+          </button>
+          <button
+            className="py-2 w-[160px] bg-white text-black font-bold font-nunito rounded mr-20"
+            onClick={() => router.push("/createSingleNote")}
+          >
+            Single unit note
           </button>
         </div>
       </div>

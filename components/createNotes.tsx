@@ -1,8 +1,12 @@
 "use client";
 import axios from "axios";
+import Lottie from "lottie-react";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
+import aiLottie from "@/public/aiLoading.json";
+import rightLottie from "@/public/rightLottie.json";
+import wrongLottie from "@/public/wrongLottie.json";
 import {
   branch,
   course,
@@ -14,7 +18,7 @@ const CreateNotes = () => {
   const [data, setData] = useState<{
     chapterNumber: number | null;
     unitName: string | null;
-    topics: string[] | null;
+    topics: string[][];
     course: string | null;
     branch: string | null;
     year: string | null;
@@ -22,50 +26,281 @@ const CreateNotes = () => {
   }>({
     chapterNumber: null,
     unitName: null,
-    topics: null,
+    topics: [[]],
     course: null,
     branch: null,
     year: null,
     semester: null,
   });
   const [loading, setLoading] = useState(false);
+  const [unitLoading, setUnitLoading] = useState<
+    { loading: boolean; completed: boolean; error: boolean }[]
+  >([
+    {
+      loading: false,
+      completed: false,
+      error: false,
+    },
+  ]);
+  const [error, setError] = useState(false);
   const router = useRouter();
+
   const handleSubmit = () => {
+    let unitLoadingState = unitLoading;
     setLoading(true);
+
     if (
-      data.chapterNumber === null ||
-      data.topics === null ||
-      data.unitName === null
+      data.unitName === null &&
+      data.course === null &&
+      data.branch === null &&
+      data.year === null &&
+      data.semester === null
     ) {
       alert("Please fill all input fields...");
       setLoading(false);
       return;
     }
-    axios
-      .post("/api/notes", data, { timeout: 1000 * 60 * 60 })
-      .then((res) => {
-        if (res.status === 200) {
-          setLoading(false);
-          alert("Whoa! Notes created successfully.");
-          router.push("/");
+    if (error) {
+      data.topics.forEach((e, i) => {
+        if (
+          unitLoadingState[i].error &&
+          !unitLoadingState[i].loading &&
+          !unitLoadingState[i].completed
+        ) {
+          setUnitLoading((pre) => {
+            return pre.map((e, index) => {
+              if (index === i) {
+                e = {
+                  loading: true,
+                  completed: false,
+                  error: false,
+                };
+              }
+              return e;
+            });
+          });
+          unitLoadingState[i] = {
+            loading: true,
+            completed: false,
+            error: false,
+          };
+          const payload = {
+            chapterNumber: i + 1,
+            unitName: data.unitName,
+            topics: data.topics[i],
+            course: data.course,
+            branch: data.branch,
+            year: data.year,
+            semester: data.semester,
+          };
+          axios
+            .post("/api/notes", payload, { timeout: 1000 * 60 * 60 })
+            .then((res) => {
+              // alert(`Whoa! Notes for unit ${i + 1} created successfully.`);
+              if (res.status === 200) {
+                setUnitLoading((pre) => {
+                  return pre.map((e, index) => {
+                    if (index === i) {
+                      e = {
+                        loading: false,
+                        completed: true,
+                        error: false,
+                      };
+                    }
+                    return e;
+                  });
+                });
+                unitLoadingState[i] = {
+                  loading: false,
+                  completed: true,
+                  error: false,
+                };
+                const containFalseLoading = unitLoadingState.every(
+                  (el) => el.loading === false
+                );
+                const conditionForErrorAndSuccess = unitLoadingState.every(
+                  (el) =>
+                    (el.error === false && el.completed === true) ||
+                    (el.error === true && el.completed === false)
+                );
+
+                if (containFalseLoading && conditionForErrorAndSuccess) {
+                  setLoading(false);
+                  const confirm = window.confirm(
+                    "Whoa! Notes generated for all the units🥳🎉. Do you want to go back?"
+                  );
+                  if (confirm) {
+                    router.push("/");
+                  }
+                }
+
+                //
+              }
+            })
+            .catch((err) => {
+              console.log(err);
+              alert(err.response.data);
+              setUnitLoading((pre) => {
+                return pre.map((e, index) => {
+                  if (index === i) {
+                    e = {
+                      loading: false,
+                      completed: false,
+                      error: true,
+                    };
+                  }
+                  return e;
+                });
+              });
+              unitLoadingState[i] = {
+                loading: false,
+                completed: false,
+                error: true,
+              };
+              const containFalseLoading = unitLoadingState.every(
+                (el) => el.loading === false
+              );
+              const conditionForErrorAndSuccess = unitLoadingState.every(
+                (el) =>
+                  (el.error === false && el.completed === true) ||
+                  (el.error === true && el.completed === false)
+              );
+              if (containFalseLoading && conditionForErrorAndSuccess) {
+                setLoading(false);
+              }
+              setError(true);
+            });
         }
-      })
-      .catch((err) => {
-        console.log(err);
-        alert(err.response.data);
-        setLoading(false);
       });
+    } else {
+      data.topics.forEach((topics, i) => {
+        setUnitLoading((pre) => {
+          return pre.map((e, index) => {
+            if (index === i) {
+              e = {
+                loading: true,
+                completed: false,
+                error: false,
+              };
+            }
+            return e;
+          });
+        });
+        unitLoadingState[i] = {
+          loading: true,
+          completed: false,
+          error: false,
+        };
+
+        console.log("333333", unitLoadingState);
+        const payload = {
+          chapterNumber: i + 1,
+          unitName: data.unitName,
+          topics: topics,
+          course: data.course,
+          branch: data.branch,
+          year: data.year,
+          semester: data.semester,
+        };
+        axios
+          .post("/api/notes", payload, { timeout: 1000 * 60 * 60 })
+          .then((res) => {
+            // alert(`Whoa! Notes for unit ${i + 1} created successfully.`);
+            if (res.status === 200) {
+              setUnitLoading((pre) => {
+                return pre.map((e, index) => {
+                  if (index === i) {
+                    e = {
+                      loading: false,
+                      completed: true,
+                      error: false,
+                    };
+                  }
+                  return e;
+                });
+              });
+              unitLoadingState[i] = {
+                loading: false,
+                completed: true,
+                error: false,
+              };
+
+              const containFalseLoading = unitLoadingState.every(
+                (el) => el.loading === false
+              );
+              const conditionForErrorAndSuccess = unitLoadingState.every(
+                (el) =>
+                  (el.error === false && el.completed === true) ||
+                  (el.error === true && el.completed === false)
+              );
+              if (containFalseLoading && conditionForErrorAndSuccess) {
+                setLoading(false);
+                const confirm = window.confirm(
+                  "Whoa! Notes generated for all the units🥳🎉. Do you want to go back?"
+                );
+                if (confirm) {
+                  router.push("/");
+                }
+              }
+              console.log(
+                "2222222",
+                unitLoadingState,
+                containFalseLoading,
+                conditionForErrorAndSuccess
+              );
+
+              //
+            }
+          })
+          .catch((err) => {
+            console.log(err);
+            // prompt(err.response.data);
+            setUnitLoading((pre) => {
+              return pre.map((e, index) => {
+                if (index === i) {
+                  e = {
+                    loading: false,
+                    completed: false,
+                    error: true,
+                  };
+                }
+                return e;
+              });
+            });
+            unitLoadingState[i] = {
+              loading: false,
+              completed: false,
+              error: true,
+            };
+            console.log("11111", unitLoadingState);
+            const containFalseLoading = unitLoadingState.every(
+              (el) => el.loading === false
+            );
+            const conditionForErrorAndSuccess = unitLoadingState.every(
+              (el) =>
+                (el.error === false && el.completed === true) ||
+                (el.error === true && el.completed === false)
+            );
+            if (containFalseLoading && conditionForErrorAndSuccess) {
+              setLoading(false);
+            }
+            setError(true);
+          });
+      });
+    }
   };
 
+  console.log(unitLoading, "unitLoading =========++++++++");
+
   return (
-    <div className="h-[100vh] w-[100vw] flex justify-center items-center  overflow-x-auto">
-      <div className="w-[50vw] py-5  bg-gray-400 rounded-md bg-clip-padding overflow-hidden backdrop-filter backdrop-blur-sm bg-opacity-20 border border-gray-100 flex flex-col justify-center items-center">
+    <div className="h-[100vh] w-[100vw] flex justify-center items-start  overflow-y-auto">
+      <div className="w-[60vw] py-5  bg-gray-400 rounded-md bg-clip-padding overflow-hidden backdrop-filter backdrop-blur-sm bg-opacity-20 border border-gray-100 flex flex-col justify-center items-center my-10  ">
         <div className="font-medium text-center text-3xl text-white font-nunito mb-5">
           Create a Notes
         </div>
         <div className="w-full flex justify-center items-center gap-4 flex-col">
-          <input
-            className="block w-3/5  rounded-md border-0 py-2 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-600 font-nunito tracking-wide text-3xl  font-bold focus:ring-2 focus:ring-inherit focus:ring-indigo-600 sm:text-sm sm:leading-6 focus:outline-none"
+          {/* <input
+            className="block w-4/5  rounded-md border-0 py-2 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-600 font-nunito tracking-wide text-3xl  font-bold focus:ring-2 focus:ring-inherit focus:ring-indigo-600 sm:text-sm sm:leading-6 focus:outline-none"
             placeholder="Enter the unit number..."
             type="number"
             value={data?.chapterNumber as number}
@@ -75,11 +310,12 @@ const CreateNotes = () => {
                 chapterNumber: Number(e.target.value),
               }))
             }
-          />
+          /> */}
           <input
-            className="block w-3/5  rounded-md border-0 py-2 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-600 font-nunito tracking-wide text-3xl  font-bold focus:ring-2 focus:ring-inherit focus:ring-indigo-600 sm:text-sm sm:leading-6 focus:outline-none"
+            className="block w-4/5  rounded-md border-0 py-2 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-600 font-nunito tracking-wide text-3xl  font-bold focus:ring-2 focus:ring-inherit focus:ring-indigo-600 sm:text-sm sm:leading-6 focus:outline-none"
             placeholder="Enter the unit name..."
             value={data?.unitName as string}
+            disabled={loading}
             onChange={(e) =>
               setData((pre) => ({
                 ...pre,
@@ -87,21 +323,10 @@ const CreateNotes = () => {
               }))
             }
           />
-          <textarea
-            className="block w-3/5 h-48 rounded-md border-0 py-2 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-600 font-nunito tracking-wide text-3xl  font-bold focus:ring-2 focus:ring-inherit focus:ring-indigo-600 sm:text-sm sm:leading-6 focus:outline-none"
-            placeholder="Add the sub topic of the units separated by commas..."
-            value={data?.topics as string[]}
-            onChange={(e) =>
-              setData((pre) => ({
-                ...pre,
-                topics: e.target.value.split(","),
-              }))
-            }
-          />
 
           <select
             id="countries"
-            className="w-3/5 rounded-md  border border-gray-300 text-gray-900 text-sm focus:ring-blue-500 focus:border-blue-500 block p-2.5 focus:outline-none "
+            className="w-4/5 rounded-md  border border-gray-300 text-gray-900 text-sm focus:ring-blue-500 focus:border-blue-500 block p-2.5 focus:outline-none "
             value={data?.course as string}
             onChange={(e) =>
               setData((pre) => ({
@@ -109,6 +334,7 @@ const CreateNotes = () => {
                 course: e.target.value,
               }))
             }
+            disabled={loading}
           >
             <option selected>Choose a course</option>
             {course.map((e, i) => (
@@ -119,7 +345,7 @@ const CreateNotes = () => {
           </select>
           <select
             id="countries"
-            className="w-3/5 rounded-md  border border-gray-300 text-gray-900 text-sm focus:ring-blue-500 focus:border-blue-500 block p-2.5 focus:outline-none "
+            className="w-4/5 rounded-md  border border-gray-300 text-gray-900 text-sm focus:ring-blue-500 focus:border-blue-500 block p-2.5 focus:outline-none "
             value={data?.branch as string}
             onChange={(e) =>
               setData((pre) => ({
@@ -127,6 +353,7 @@ const CreateNotes = () => {
                 branch: e.target.value,
               }))
             }
+            disabled={loading}
           >
             <option selected>Choose a branch</option>
             {branch.map((e, i) => (
@@ -134,16 +361,10 @@ const CreateNotes = () => {
                 {e.name}
               </option>
             ))}
-            {/* <option value="cse">Computer Science Engg.</option>
-            <option value="it">Information Technology Engg.</option>
-            <option value="exe">Electrical & Electronics Engg.</option>
-            <option value="ece">Electronics and Communication Engg. </option>
-            <option value="civil">Civil Engg.</option>
-            <option value="mechanical">Mechanical Engg.</option> */}
           </select>
           <select
             id="countries"
-            className="w-3/5 rounded-md  border border-gray-300 text-gray-900 text-sm focus:ring-blue-500 focus:border-blue-500 block p-2.5 focus:outline-none "
+            className="w-4/5 rounded-md  border border-gray-300 text-gray-900 text-sm focus:ring-blue-500 focus:border-blue-500 block p-2.5 focus:outline-none "
             value={data?.year as string}
             onChange={(e) =>
               setData((pre) => ({
@@ -151,6 +372,7 @@ const CreateNotes = () => {
                 year: e.target.value,
               }))
             }
+            disabled={loading}
           >
             <option selected>Choose a year</option>
             {graduationYear.map((e, i) => (
@@ -158,14 +380,10 @@ const CreateNotes = () => {
                 {e.name}
               </option>
             ))}
-            {/* <option value="1">1 Year</option>
-            <option value="2">2 Year</option>
-            <option value="3">3 Year</option>
-            <option value="4">4 Year</option> */}
           </select>
           <select
             id="countries"
-            className="w-3/5 rounded-md  border border-gray-300 text-gray-900 text-sm focus:ring-blue-500 focus:border-blue-500 block p-2.5 focus:outline-none "
+            className="w-4/5 rounded-md  border border-gray-300 text-gray-900 text-sm focus:ring-blue-500 focus:border-blue-500 block p-2.5 focus:outline-none mb-5 "
             value={data?.semester as string}
             onChange={(e) =>
               setData((pre) => ({
@@ -173,6 +391,7 @@ const CreateNotes = () => {
                 semester: e.target.value,
               }))
             }
+            disabled={loading}
           >
             <option selected>Choose a semester</option>
             {graduationSemester.map((e, i) => (
@@ -180,19 +399,93 @@ const CreateNotes = () => {
                 {e.name}
               </option>
             ))}
-            {/* <option value="1">1 Semester</option>
-            <option value="2">2 Semester</option>
-            <option value="3">3 Semester</option>
-            <option value="4">4 Semester</option>
-            <option value="5">5 Semester</option>
-            <option value="6">6 Semester</option>
-            <option value="7">7 Semester</option>
-            <option value="8">8 Semester</option> */}
           </select>
         </div>
+
+        {unitLoading?.map((e, i) => (
+          <div
+            className="w-full flex justify-center items-center flex-col relative"
+            key={i + 1}
+          >
+            <textarea
+              className="block w-4/5 h-48 rounded-md  py-2 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-600 font-nunito tracking-wide text-3xl  font-bold focus:ring-2 focus:ring-inherit focus:ring-indigo-600 sm:text-sm sm:leading-6 focus:outline-none mb-5 border-gray-600"
+              placeholder="Add the sub topic of the units separated by commas..."
+              value={data?.topics[i] as string[]}
+              disabled={loading}
+              onChange={(e) => {
+                const topics = data.topics;
+                topics[i] = e.target.value.split(",");
+                setData((pre) => ({
+                  ...pre,
+                  topics: topics,
+                }));
+              }}
+            />
+            <div className="absolute z-10 text-gray-600 top-0 left-[6.7%] h-10 w-10 bg-white flex justify-center items-center rounded-l font-nunito text-xl font-semibold">
+              {i + 1}
+            </div>
+            {e.loading ? (
+              <div className="absolute z-10 text-gray-600 top-0 right-4 h-20 w-20 bg-white flex justify-center items-center rounded-r font-nunito text-xl font-semibold">
+                <Lottie
+                  loop={true}
+                  animationData={aiLottie}
+                  rendererSettings={{
+                    preserveAspectRatio: "xMidYMid slice",
+                  }}
+                />
+              </div>
+            ) : e.completed ? (
+              <div className="absolute z-10 text-gray-600 top-0 right-4 h-20 w-20 bg-white flex justify-center items-center rounded-r font-nunito text-xl font-semibold">
+                <Lottie
+                  loop={true}
+                  animationData={rightLottie}
+                  rendererSettings={{
+                    preserveAspectRatio: "xMidYMid slice",
+                  }}
+                />
+              </div>
+            ) : e.error ? (
+              <div className="absolute z-10 text-gray-600 top-0 right-4 h-20 w-20 bg-white flex justify-center items-center rounded-r font-nunito text-xl font-semibold">
+                <Lottie
+                  loop={true}
+                  animationData={wrongLottie}
+                  rendererSettings={{
+                    preserveAspectRatio: "xMidYMid slice",
+                  }}
+                />
+              </div>
+            ) : (
+              ""
+            )}
+          </div>
+        ))}
+        {!loading && !error ? (
+          <button
+            className="h-10 block mb-5 w-1/5 text-center font-semibold rounded-md bg-white text-black mx-auto"
+            onClick={() => {
+              setData((pre) => ({
+                ...pre,
+                topics: [...pre.topics, []],
+              }));
+              setUnitLoading((pre) => [
+                ...pre,
+                {
+                  loading: false,
+                  completed: false,
+                  error: false,
+                },
+              ]);
+            }}
+          >
+            Add Unit
+          </button>
+        ) : (
+          ""
+        )}
+
         <div className="w-full ">
           <button
-            className="h-10 block mt-5 w-2/5 text-center font-semibold rounded-md bg-white text-black mx-auto"
+            className="h-12 block mt-5 w-4/5 text-center font-semibold rounded-md bg-white text-black mx-auto"
             onClick={() => !loading && handleSubmit()}
           >
             {loading ? (
@@ -212,6 +505,8 @@ const CreateNotes = () => {
                   fill="currentFill"
                 />
               </svg>
+            ) : unitLoading.some((el) => el.error === true) ? (
+              "Generate Units Again"
             ) : (
               "Generate"
             )}

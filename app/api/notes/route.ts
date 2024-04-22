@@ -88,7 +88,7 @@ export const createNotesOpenAI = async (topics: string[], unitName: string) => {
     const model = new ChatOpenAI({
       modelName: "gpt-3.5-turbo",
       openAIApiKey: process.env.OPENAI_API_KEY,
-      temperature: 0.4,
+      temperature: 0.1,
     });
     const chain = new LLMChain({
       prompt: chatPromptTemplate,
@@ -109,6 +109,13 @@ export const createNotesOpenAI = async (topics: string[], unitName: string) => {
         if (Json && Json.topic && Json.explanation) {
           let ytVideosArr = await searchYoutube(Json.topic + "in hindi");
 
+          if (ytVideosArr === null) {
+            return {
+              success: false,
+              message:
+                "All YouTube API requests failed or check you api limit .",
+            };
+          }
           ytVideosArr = ytVideosArr?.map((e: any) => e.id.videoId);
           updatedResponse.push({ ...Json, youtubeIds: ytVideosArr });
 
@@ -124,7 +131,7 @@ export const createNotesOpenAI = async (topics: string[], unitName: string) => {
         console.error("Error parsing OpenAI response:", error);
         return {
           success: false,
-          message: "Error parsing OpenAI response or youtube api error occur.",
+          message: "Error parsing OpenAI response",
         };
       }
       // const Json = await openAiParser.parse(Response);
@@ -256,6 +263,14 @@ export const GET = async (req: NextRequest, res: NextResponse) => {
       year,
       branch,
     },
+    orderBy: [
+      {
+        unitName: "asc",
+      },
+      {
+        chapterNumber: "asc",
+      },
+    ],
     include: {
       response: {
         include: {

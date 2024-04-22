@@ -4,20 +4,6 @@ export const searchYoutube = async (
   searchString: string
   // youtubeAPIKeys: string[]
 ) => {
-  // const searchQuery = encodeURIComponent(searchString);
-  // const { data } = await axios.get(
-  //   `https://www.googleapis.com/youtube/v3/search?key=${process.env.YOUTUBE_API_KEY}&q=${searchQuery}&videoDuration=medium&videoEmbeddable=true&type=video&maxResults=2`
-  // );
-  // if (!data) {
-  //   console.log("youtube fail");
-  //   return null;
-  // }
-  // if (data.items[0] == undefined) {
-  //   console.log("youtube fail");
-  //   return null;
-  // }
-  // // console.log("yt data ====================", data.items);
-  // return data.items;
   const youtubeAPIKeys = [
     process.env.YOUTUBE_API_KEY1,
     process.env.YOUTUBE_API_KEY2,
@@ -50,6 +36,8 @@ export const searchYoutube = async (
       );
       if (data && data.items && data.items.length > 0) {
         return data.items;
+      } else if (data.items.length === 0) {
+        return undefined;
       }
     } catch (error) {
       console.error("YouTube API request failed with API key:", apiKey);
@@ -58,6 +46,21 @@ export const searchYoutube = async (
   console.log("All YouTube API requests failed");
   return null;
 };
+
+// const searchQuery = encodeURIComponent(searchString);
+// const { data } = await axios.get(
+//   `https://www.googleapis.com/youtube/v3/search?key=${process.env.YOUTUBE_API_KEY}&q=${searchQuery}&videoDuration=medium&videoEmbeddable=true&type=video&maxResults=2`
+// );
+// if (!data) {
+//   console.log("youtube fail");
+//   return null;
+// }
+// if (data.items[0] == undefined) {
+//   console.log("youtube fail");
+//   return null;
+// }
+// // console.log("yt data ====================", data.items);
+// return data.items;
 
 // const systemPrompt = `I have given you the {topic} in context of {unit}. You have to explain that {topic} in 200 words to a 10 year old student. Use simple language, provide a overview of what {topic} and why it's important and interesting and remember you have to give the response explanation in single paragraph, do not use new line character and double quote. If there's a notable feature ,application, characteristics,example, advantage, disadvantage and types associated with {topic} than explain that also in brief in "extraPoints". Ensure there are no newline characters in the explanation.`;
 
